@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gym Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gym">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1115">
+<style>
+:root{--bg:#0f1115;--card:#1a1d24;--line:#2a2f3a;--tx:#f2f4f8;--mute:#8b93a3;--ac:#ff6b35;--ok:#3ddc97}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif}
+body{padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 84px)}
+h1{font-size:22px;margin:0 0 12px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:20px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+label{display:block;font-size:12px;color:var(--mute);margin-bottom:3px}
+input,select{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:11px;font-size:16px}
+button{font:inherit;border:0;border-radius:12px;padding:12px;background:var(--ac);color:#fff;font-weight:600;width:100%;margin-top:10px}
+button.ghost{background:var(--line);color:var(--tx);margin-top:6px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.mute{color:var(--mute);font-size:13px}
+.x{background:none;color:var(--mute);width:auto;margin:0;padding:6px 10px;font-size:20px}
+.up{color:var(--ok)}.dn{color:#ff6b6b}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(26,29,36,.96);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav a{flex:1;text-align:center;padding:11px 0 9px;color:var(--mute);font-size:12px;text-decoration:none}
+nav a b{display:block;font-size:20px;font-weight:400}
+nav a.on{color:var(--ac)}
+section{display:none}section.on{display:block}
+svg{width:100%;height:auto;display:block}
+.stat{font-size:26px;font-weight:700}
+</style>
+</head>
+<body>
+
+<section id="workouts" class="on">
+  <h1>Workouts</h1>
+  <div class="card">
+    <label>Exercise</label>
+    <input id="wEx" list="exList" placeholder="e.g. Bench Press" autocomplete="off">
+    <datalist id="exList"></datalist>
+    <div class="grid3" style="margin-top:8px">
+      <div><label>Weight (<span class="wu"></span>)</label><input id="wW" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Sets</label><input id="wS" type="number" inputmode="numeric" value="3"></div>
+      <div><label>Reps</label><input id="wR" type="number" inputmode="numeric" value="8"></div>
+    </div>
+    <div style="margin-top:8px"><label>Date</label><input id="wD" type="date"></div>
+    <button id="wAdd">Add set</button>
+  </div>
+  <div id="wList"></div>
+</section>
+
+<section id="body">
+  <h1>Body</h1>
+  <div class="card">
+    <div class="grid">
+      <div><label>Weight (<span class="wu"></span>)</label><input id="b_weight" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Body fat %</label><input id="b_fat" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Chest (<span class="lu"></span>)</label><input id="b_chest" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Waist (<span class="lu"></span>)</label><input id="b_waist" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Hips (<span class="lu"></span>)</label><input id="b_hips" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Arms (<span class="lu"></span>)</label><input id="b_arm" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Thighs (<span class="lu"></span>)</label><input id="b_thigh" type="number" inputmode="decimal" step="any"></div>
+      <div><label>Date</label><input id="bD" type="date"></div>
+    </div>
+    <button id="bAdd">Save measurements</button>
+  </div>
+  <div id="bList"></div>
+</section>
+
+<section id="progress">
+  <h1>Progress</h1>
+  <div class="card">
+    <label>Track</label>
+    <select id="pSel"></select>
+    <div id="pStat" style="margin-top:10px"></div>
+    <div id="pChart"></div>
+  </div>
+  <h2>Settings</h2>
+  <div class="card">
+    <div class="grid">
+      <div><label>Weight unit</label><select id="uW"><option>lb</option><option>kg</option></select></div>
+      <div><label>Length unit</label><select id="uL"><option>in</option><option>cm</option></select></div>
+    </div>
+    <button class="ghost" id="exp">Export backup</button>
+    <button class="ghost" id="imp">Import backup</button>
+    <input id="impF" type="file" accept="application/json" hidden>
+  </div>
+  <p class="mute">Data is saved only on this device. Export a backup now and then.</p>
+</section>
+
+<nav>
+  <a href="#workouts" class="on"><b>🏋️</b>Workouts</a>
+  <a href="#body"><b>📏</b>Body</a>
+  <a href="#progress"><b>📈</b>Progress</a>
+</nav>
+
+<script>
+const $=id=>document.getElementById(id);
+const KEY="gymTracker.v1";
+let S={workouts:[],body:[],uW:"lb",uL:"in"};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert("Couldn't save to this browser.")}};
+const today=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const fmtD=d=>new Date(d+"T12:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const BF=[["weight","Weight","w"],["fat","Body fat","%"],["chest","Chest","l"],["waist","Waist","l"],["hips","Hips","l"],["arm","Arms","l"],["thigh","Thighs","l"]];
+const unit=t=>t==="w"?S.uW:t==="l"?S.uL:"%";
+
+// tabs
+function route(){const h=(location.hash||"#workouts").slice(1);
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===h));
+  document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("on",a.hash==="#"+h));
+  if(h==="progress")drawProgress();window.scrollTo(0,0)}
+addEventListener("hashchange",route);
+
+function units(){document.querySelectorAll(".wu").forEach(e=>e.textContent=S.uW);
+  document.querySelectorAll(".lu").forEach(e=>e.textContent=S.uL);$("uW").value=S.uW;$("uL").value=S.uL}
+
+// workouts
+function renderW(){
+  const names=[...new Set(S.workouts.map(w=>w.ex))].sort();
+  $("exList").innerHTML=names.map(n=>`<option value="${esc(n)}">`).join("");
+  const by={};S.workouts.forEach(w=>(by[w.date]=by[w.date]||[]).push(w));
+  const days=Object.keys(by).sort().reverse();
+  $("wList").innerHTML=days.length?days.map(d=>`<h2>${fmtD(d)}</h2><div class="card">`+
+    by[d].map(w=>`<div class="row"><div><b>${esc(w.ex)}</b><div class="mute">${w.s} × ${w.r} @ ${w.w} ${S.uW}</div></div><button class="x" data-del="w:${w.id}">×</button></div>`).join("")+`</div>`).join(""):
+    `<p class="mute">No workouts yet. Log your first set above.</p>`;
+}
+$("wAdd").onclick=()=>{
+  const ex=$("wEx").value.trim(),w=parseFloat($("wW").value),s=parseInt($("wS").value)||1,r=parseInt($("wR").value)||1;
+  if(!ex||isNaN(w)){alert("Enter an exercise and weight.");return}
+  S.workouts.push({id:uid(),date:$("wD").value||today(),ex,w,s,r});save();renderW();$("wW").value="";
+};
+
+// body
+function renderB(){
+  const rows=[...S.body].sort((a,b)=>b.date.localeCompare(a.date));
+  $("bList").innerHTML=rows.length?`<h2>History</h2>`+rows.map((m,i)=>{
+    const prev=rows[i+1];
+    const parts=BF.filter(f=>m[f[0]]!=null).map(f=>{
+      let dl="";if(prev&&prev[f[0]]!=null){const d=+(m[f[0]]-prev[f[0]]).toFixed(1);if(d)dl=` <span class="${d<0?"up":"dn"}">${d>0?"+":""}${d}</span>`}
+      return `${f[1]} ${m[f[0]]}${unit(f[2])}${dl}`}).join(" · ");
+    return `<div class="card"><div class="row" style="border:0;padding:0"><b>${fmtD(m.date)}</b><button class="x" data-del="b:${m.id}">×</button></div><div class="mute" style="margin-top:4px">${parts}</div></div>`}).join(""):
+    `<p class="mute">No measurements yet.</p>`;
+}
+$("bAdd").onclick=()=>{
+  const m={id:uid(),date:$("bD").value||today()};let any=false;
+  BF.forEach(f=>{const v=parseFloat($("b_"+f[0]).value);if(!isNaN(v)){m[f[0]]=v;any=true}});
+  if(!any){alert("Enter at least one measurement.");return}
+  S.body.push(m);save();renderB();BF.forEach(f=>$("b_"+f[0]).value="");
+};
+
+// delete
+document.addEventListener("click",e=>{const d=e.target.dataset&&e.target.dataset.del;if(!d)return;
+  if(!confirm("Delete this entry?"))return;const[t,id]=d.split(":");
+  if(t==="w")S.workouts=S.workouts.filter(x=>x.id!==id);else S.body=S.body.filter(x=>x.id!==id);
+  save();renderW();renderB();drawProgress()});
+
+// progress
+function fillSel(){const cur=$("pSel").value;
+  const ex=[...new Set(S.workouts.map(w=>w.ex))].sort();
+  $("pSel").innerHTML=`<optgroup label="Exercises (top weight)">${ex.map(n=>`<option value="e:${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>`+
+    `<optgroup label="Body">${BF.map(f=>`<option value="b:${f[0]}">${f[1]}</option>`).join("")}</optgroup>`;
+  if(cur)$("pSel").value=cur}
+function drawProgress(){
+  fillSel();const v=$("pSel").value||"";const[t,k]=[v.slice(0,1),v.slice(2)];let pts=[],u="";
+  if(t==="e"){const m={};S.workouts.filter(w=>w.ex===k).forEach(w=>m[w.date]=Math.max(m[w.date]||0,w.w));
+    pts=Object.entries(m).sort();u=S.uW}
+  else if(t==="b"){pts=S.body.filter(b=>b[k]!=null).sort((a,b)=>a.date.localeCompare(b.date)).map(b=>[b.date,b[k]]);
+    u=unit(BF.find(f=>f[0]===k)[2])}
+  if(!pts.length){$("pStat").innerHTML=`<span class="mute">No data yet.</span>`;$("pChart").innerHTML="";return}
+  const vals=pts.map(p=>p[1]),last=vals[vals.length-1],first=vals[0],d=+(last-first).toFixed(1);
+  $("pStat").innerHTML=`<div class="stat">${last} ${u}</div><div class="mute">${t==="e"?"Best "+Math.max(...vals)+" "+u+" · ":""}${pts.length} entries · <span class="${d>=0?"up":"dn"}">${d>0?"+":""}${d} since start</span></div>`;
+  const W=320,H=170,p=26;let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=1;mx+=1}
+  const X=i=>pts.length===1?W/2:p+i*(W-2*p)/(pts.length-1),Y=y=>H-p-(y-mn)/(mx-mn)*(H-2*p);
+  const line=pts.map((q,i)=>(i?"L":"M")+X(i).toFixed(1)+","+Y(q[1]).toFixed(1)).join("");
+  $("pChart").innerHTML=`<svg viewBox="0 0 ${W} ${H}"><path d="${line}" fill="none" stroke="#ff6b35" stroke-width="2.5" stroke-linejoin="round"/>`+
+    pts.map((q,i)=>`<circle cx="${X(i)}" cy="${Y(q[1])}" r="3.5" fill="#ff6b35"/>`).join("")+
+    `<text x="4" y="${Y(mx)+4}" fill="#8b93a3" font-size="10">${mx}</text><text x="4" y="${Y(mn)+4}" fill="#8b93a3" font-size="10">${mn}</text>`+
+    `<text x="${p}" y="${H-6}" fill="#8b93a3" font-size="10">${fmtD(pts[0][0])}</text><text x="${W-p}" y="${H-6}" fill="#8b93a3" font-size="10" text-anchor="end">${fmtD(pts[pts.length-1][0])}</text></svg>`;
+}
+$("pSel").onchange=drawProgress;
+
+// settings / backup
+$("uW").onchange=e=>{S.uW=e.target.value;save();units();renderW();renderB();drawProgress()};
+$("uL").onchange=e=>{S.uL=e.target.value;save();units();renderB();drawProgress()};
+$("exp").onclick=()=>{const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}));
+  a.download="gym-backup-"+today()+".json";a.click()};
+$("imp").onclick=()=>$("impF").click();
+$("impF").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.workouts)||!Array.isArray(d.body))throw 0;
+    if(confirm("Replace current data with this backup?")){S=Object.assign(S,d);save();units();renderW();renderB();drawProgress()}}
+    catch(x){alert("That file isn't a valid backup.")}};r.readAsText(f)};
+
+$("wD").value=today();$("bD").value=today();
+units();renderW();renderB();route();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
